@@ -156,12 +156,39 @@ class LlavaMetaForCausalLM(ABC):
 
         # 计算每个样本的 text_feature（平均 embedding，去除 padding）
         text_features = []
-        for cur_input_ids, cur_attention_mask in zip(input_ids, attention_mask):
-            # 过滤掉 IMAGE_TOKEN_INDEX，只保留有效的文本token
-            valid_mask = (cur_input_ids != IMAGE_TOKEN_INDEX) & cur_attention_mask
-            valid_input_ids = cur_input_ids[valid_mask]
-            cur_input_embeds = self.get_model().embed_tokens(valid_input_ids)
-            text_features.append(cur_input_embeds.mean(dim=0, keepdim=True))  # [1, hidden_dim]
+        for cur_input_ids, cur_labels, cur_attention_mask in zip(input_ids, labels, attention_mask):
+            # 找到IMAGE_TOKEN_INDEX的位置
+            image_token_positions = torch.where(cur_input_ids == IMAGE_TOKEN_INDEX)[0]
+            last_img_pos = image_token_positions[-1] if len(image_token_positions) > 0 else -1
+            after_image_mask = torch.arange(len(cur_labels), device=cur_labels.device) > last_img_pos
+            label_mask = (cur_labels == IGNORE_INDEX)
+            
+            # 只保留第一段连续的1，其余设置为0
+            if label_mask.any():
+                # 找到第一个1的位置
+                first_one = torch.where(label_mask)[0][0]
+                # 找到第一个1之后第一个0的位置
+                after_first_one = label_mask[first_one:]
+                if after_first_one.all():  # 如果从第一个1开始都是1
+                    last_one = len(label_mask) - 1
+                else:
+                    # 找到第一个1之后第一个0的位置
+                    first_zero_after = torch.where(~after_first_one)[0]
+                    if len(first_zero_after) > 0:
+                        last_one = first_one + first_zero_after[0] - 1
+                    else:
+                        last_one = len(label_mask) - 1
+                
+                # 创建新的mask，只保留第一段连续的1
+                new_label_mask = torch.zeros_like(label_mask)
+                new_label_mask[first_one:last_one+1] = True
+                label_mask = new_label_mask
+            
+            valid_mask = after_image_mask & label_mask & cur_attention_mask
+            
+            text_input_ids = cur_input_ids[valid_mask]
+            cur_text_embeds = self.get_model().embed_tokens(text_input_ids)
+            text_features.append(cur_text_embeds.mean(dim=0, keepdim=True))  # [1, hidden_dim]
         text_feature = torch.cat(text_features, dim=0).detach()  # [batch, hidden_dim]
 
 
