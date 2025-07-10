@@ -155,14 +155,12 @@ class LlavaMetaForCausalLM(ABC):
 
 
         # 计算每个样本的 text_feature（平均 embedding，去除 padding）
-        # text_features = []
-        # for cur_input_ids, cur_attention_mask in zip(input_ids, attention_mask):
-        #     cur_input_embeds = self.get_model().embed_tokens(cur_input_ids[cur_attention_mask])
-        #     input(f"cur_input_embeds: {cur_input_embeds.shape}")
-        #     text_features.append(cur_input_embeds.mean(dim=0, keepdim=True))  # [1, hidden_dim]
-        # text_feature = torch.cat(text_features, dim=0).detach()  # [batch, hidden_dim]
-        # input(f"text_feature: {text_feature.shape}")
-        text_feature = torch.randn(1, 4096, dtype=torch.bfloat16, device=input_ids.device)
+        text_features = []
+        for cur_input_ids, cur_attention_mask in zip(input_ids, attention_mask):
+            cur_input_embeds = self.get_model().embed_tokens(cur_input_ids[cur_attention_mask])
+            text_features.append(cur_input_embeds.mean(dim=0, keepdim=True))  # [1, hidden_dim]
+        text_feature = torch.cat(text_features, dim=0).detach()  # [batch, hidden_dim]
+        #text_feature = torch.randn(1, 4096, dtype=torch.bfloat16, device=input_ids.device)
 
 
         if type(images) is list or images.ndim == 5:
