@@ -207,22 +207,22 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 torch.save(weight_to_save, os.path.join(output_dir, f'mm_projector.bin'))
         return
 
-    if getattr(trainer.args, "tune_t2i_mlp_adapter", False):
-        # Only save Adapter
-        keys_to_match = ['t2i_projector']
-        weight_to_save = get_mm_adapter_state_maybe_zero_3(trainer.model.named_parameters(), keys_to_match)
-        trainer.model.config.save_pretrained(output_dir)
+    # if getattr(trainer.args, "tune_t2i_mlp_adapter", False):
+    #     # Only save Adapter
+    #     keys_to_match = ['t2i_projector']
+    #     weight_to_save = get_mm_adapter_state_maybe_zero_3(trainer.model.named_parameters(), keys_to_match)
+    #     trainer.model.config.save_pretrained(output_dir)
 
-        current_folder = output_dir.split('/')[-1]
-        parent_folder = os.path.dirname(output_dir)
-        if trainer.args.local_rank == 0 or trainer.args.local_rank == -1:
-            if current_folder.startswith('checkpoint-'):
-                t2i_projector_folder = os.path.join(parent_folder, "t2i_projector")
-                os.makedirs(t2i_projector_folder, exist_ok=True)
-                torch.save(weight_to_save, os.path.join(t2i_projector_folder, f'{current_folder}.bin'))
-            else:
-                torch.save(weight_to_save, os.path.join(output_dir, f't2i_projector.bin'))
-        return
+    #     current_folder = output_dir.split('/')[-1]
+    #     parent_folder = os.path.dirname(output_dir)
+    #     if trainer.args.local_rank == 0 or trainer.args.local_rank == -1:
+    #         if current_folder.startswith('checkpoint-'):
+    #             t2i_projector_folder = os.path.join(parent_folder, "t2i_projector")
+    #             os.makedirs(t2i_projector_folder, exist_ok=True)
+    #             torch.save(weight_to_save, os.path.join(t2i_projector_folder, f'{current_folder}.bin'))
+    #         else:
+    #             torch.save(weight_to_save, os.path.join(output_dir, f't2i_projector.bin'))
+    #     return
 
     if trainer.deepspeed:
         torch.cuda.synchronize()

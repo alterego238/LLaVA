@@ -5,7 +5,7 @@ deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path liuhaotian/llava-v1.5-7b \
     --version v1 \
-    --data_path /data/share/hjl/LLaVA-NeXT/playground/data/llava_v1_5_mix665k.json \
+    --data_path /data/share/hjl/LLaVA-NeXT/playground/data/llava_v1_5_mix665k_debug.json \
     --image_folder /data/share/hjl/LLaVA-NeXT/playground/data \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \

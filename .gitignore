@@ -35,3 +35,4 @@ ckpts*
 serve_images/
 
 *.whl
+logs/
