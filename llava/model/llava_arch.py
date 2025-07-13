@@ -90,6 +90,12 @@ class LlavaMetaModel:
             for p in self.mm_projector.parameters():
                 p.requires_grad = True
 
+        if getattr(self, 't2i_projector', None) is None:
+            self.t2i_projector = build_t2i_projector(self.config)
+        else:
+            for p in self.t2i_projector.parameters():
+                p.requires_grad = True
+
         if pretrain_mm_mlp_adapter is not None:
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
             def get_w(weights, keyword):
